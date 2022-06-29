@@ -1,0 +1,114 @@
+import pandas as pd
+data2=pd.read_excel(r"C:\Users\Shreya\Desktop\ALL MY 54 pRODUCTS\ASUS_VIVOBOOK_Gaming.xlsx")
+dff=pd.DataFrame(data2,columns=['RATING','REVIEW','Rev_Text','Customer_Name'])
+print(dff)
+
+#1.HP 14s Celeron Dual Core
+
+
+import pandas as pd
+data2=pd.read_excel(r"C:\Users\Shreya\Downloads\Amazon_Review___Complete_Data__Razorstealth.xlsx")
+dff=pd.DataFrame(data2,columns=['Rating','Review Content'])
+print(dff)
+
+
+#2.Removing special characters and punctuation
+import string
+string.punctuation
+def remove_punctuation(txt):
+    txt_nopunct="".join([c for c in txt if c not in string.punctuation])
+    return txt_nopunct
+    
+dff['Rev_Clean']=dff['Review Content'].apply(lambda x: remove_punctuation(x))
+dff.head()
+
+
+#3. Converting words to lower case
+dff['Rev_Lower'] = dff['Review Content'].str.lower()
+dff.head()
+
+#4)Tokenization
+import re
+def tokenize(txt):
+    tokens=re.split('\W+',txt)
+    return tokens
+dff['Rev_Clean_Tokenized']=dff['Rev_Clean'].apply(lambda x:tokenize(x.lower()))
+dff.head()
+
+
+
+#5) Removing StopWords
+import nltk 
+stopwords=nltk.corpus.stopwords.words('english')
+stopwords
+
+
+def remove_stopwords(txt_tokenized):
+    txt_clean=[word for word in txt_tokenized if word not in stopwords]
+    return txt_clean
+dff['Rev_No_Stopwords']=dff['Rev_Clean_Tokenized'].apply(lambda x: remove_stopwords(x))
+dff.head()
+
+
+# lemmatization
+#from nltk.stem import PorterStemmer, LancasterStemmer # Common stemmers
+from nltk.stem import WordNetLemmatizer # Common Lematizer
+nltk.download('wordnet')
+from nltk.corpus import wordnet
+
+#porter = PorterStemmer()
+#lancaster = LancasterStemmer()
+lemmatizer = WordNetLemmatizer()
+def lemmatization (token_txt):
+    text=[lemmatizer.lemmatize(word) for word in token_txt]
+    return text
+    
+dff['Rev_Lemmatized']=dff['Rev_No_Stopwords'].apply(lambda x: lemmatization(x))
+dff.head()
+
+
+#sentiment analysis
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import re
+import os
+import sys
+import ast
+plt.style.use('fivethirtyeight')
+# Function for getting the sentiment
+cp = sns.color_palette()
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+analyzer = SentimentIntensityAnalyzer()
+
+# Generating sentiment for all the sentence present in the dataset
+emptyline=[]
+for row in dff['Review Content']:
+    
+    vs=analyzer.polarity_scores(row)
+    emptyline.append(vs)
+    # Creating new dataframe with sentiments
+dff_sentiments=pd.DataFrame(emptyline)
+dff_sentiments.head()
+
+
+dff_c = pd.concat([dff.reset_index(drop=True), dff_sentiments], axis=1)
+dff_c.head(3)
+
+# Convert scores into positive and negetive sentiments using some threshold(compound)
+import numpy as np
+dff_c['Sentiment'] = np.where(dff_c['compound'] >= 0 , 'Positive','Negative')
+dff_c.head(5)
+
+import numpy as np
+dff_c['Sentiment'] = np.where(dff_c['compound'] >= 0 , 'Positive','Negative')
+dff_c.head(5)
+dff_c["Sentiment"].value_counts()
+plt.figure(figsize = (8,6))
+sns.countplot(dff_c['Sentiment'])
+plt.title("Distribution of Sentiment "  ,color='b')
+plt.xlabel('Sentiment',color='b')
+plt.ylabel('Scores',color='b')
+plt.show()
+
+    
